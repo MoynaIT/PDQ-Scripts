@@ -1,0 +1,1 @@
+[Environment]::SetEnvironmentVariable("JERAND_LIC_DEFER", "DEFER", "Machine")
