@@ -1,5 +1,8 @@
 # This script requires powershell 7
-# i think
+# created by: slinkytoad
+
+# revision Log:
+# 2-jul-2024 - Updated script to encompass using the Hudu Powershell module to eliminate storing credentials in the script and Github
 
 import-module HuduAPI
 # setup Hudu
@@ -192,7 +195,7 @@ $emailParams = @{
     BodyAsHtml   = $true
 }
 
-#Send-MailMessage @emailParams
+#######      try to send the email        #######
 
 try {
     Send-MailMessage @emailParams
