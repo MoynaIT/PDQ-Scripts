@@ -10,4 +10,4 @@ $SNMP = New-Object -ComObject olePrn.OleSNMP
 $SNMP.open($($printer),$($community),2,1000)
 $RESULT = $SNMP.get($($oid))
 $SNMP.Close()
-write-host "total pages " $RESULT
+write-host "total pages $($RESULT)"
