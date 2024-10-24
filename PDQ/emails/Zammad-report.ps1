@@ -3,6 +3,7 @@
 
 # revision Log:
 # 2-jul-2024 - Updated script to encompass using the Hudu Powershell module to eliminate storing credentials in the script and Github
+# 24-oct-2024 - updated script to include company name and to exclude specific tags
 
 import-module HuduAPI
 # setup Hudu
@@ -21,15 +22,21 @@ $headers.Add("Authorization", "Token $($ZammadCreds.password)")
 
 # unchanging variables
 
-$createdTickets = [System.Collections.Generic.List[Object]]::new()
+#$createdTickets = [System.Collections.Generic.List[Object]]::new()
 $closedTickets = [System.Collections.Generic.List[Object]]::new()
 $openTickets = [System.Collections.Generic.List[Object]]::new()
 
 # grab the current customer list instead of doing a look up each time against the API
 
-$uri = $baseURL + "users/search?query=role_ids:3&limit=200"
+$uri = $baseURL + "users/search?query=role_ids:3&limit=300"
 
 $customers = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+
+###### Organizations ######
+
+$uri = $baseURL + "organizations"
+
+$organizations = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
 ###### Ticket States ######
 
@@ -45,7 +52,7 @@ $ticketPriorities = Invoke-RestMethod -Uri $uri -Headers $headers -method Get
 
 ##### Grabbing all tickets that are currently open #####
 
-$uri = $baseURL + "tickets/search?query=state.name:(!closed AND !merged)&limit=100"
+$uri = $baseURL + "tickets/search?query=state.name%3A(!closed%20AND%20!merged)%20AND%20tags%3A(!automatic)&limit=100"
 
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
@@ -60,6 +67,8 @@ foreach ($ticket in $ticketIDs) {
     $customer = $customers | Where-Object {$_.id -like $response.customer_id}
     $customerName = $customer.firstname + " " + $customer.lastname
 
+    $custOrg = $organizations | Where-Object {$_.id -like $response.organization_id}
+
     $owner = $customers | Where-Object {$_.id -like $response.owner_id}
     $ownerName = $owner.firstname + " " + $owner.lastName
 
@@ -67,6 +76,7 @@ foreach ($ticket in $ticketIDs) {
         number = $response.number
         title = $response.title
         customer = $customerName
+        company = $custOrg.name
         state = ($ticketState | Where-Object {$_.id -like $response.state_id}).name
         owner = $ownerName
         priority = ($ticketPriorities | Where-Object {$_.id -like $response.priority_id}).name
@@ -85,41 +95,41 @@ $openTicketsHTML = $openTickets | ConvertTo-Html -Fragment
 
 ##### Grabbing all tickets that were created in the last 7 days #####
 
-$uri = $baseURL + "tickets/search?query=created_at:>now-7d&limit=100"
+#$uri = $baseURL + "tickets/search?query=created_at%3A(%3Enow-7d)%20AND%20tags%3A(!automatic)&limit=100"
 
 # this will return all the ticket numbers based on the above uri
-$response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+#$response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
-$ticketIDs = $response.tickets
+#$ticketIDs = $response.tickets
 
 # we need to grab each of those tickets now to get the information about each one
 
-foreach ($ticket in $ticketIDs) {
-    $uri = $baseURL + "tickets/$ticket"
-    $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+#foreach ($ticket in $ticketIDs) {
+#    $uri = $baseURL + "tickets/$ticket"
+#    $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+#
+#    $customer = $customers | Where-Object {$_.id -like $response.customer_id}
+#    $customerName = $customer.firstname + " " + $customer.lastname
+#
+#    $addline = [PScustomObject][Ordered]@{
+#        number = $response.number
+#        title = $response.title
+#        customer = $customerName
+#        state = ($ticketState | Where-Object {$_.id -like $response.state_id}).name
+#        priority = ($ticketPriorities | Where-Object {$_.id -like $response.priority_id}).name
+#        created_at = $response.created_at
+#        closed_at = $reponse.close_at
+#    }
+#    $createdTickets.Add($addline)
+#}
 
-    $customer = $customers | Where-Object {$_.id -like $response.customer_id}
-    $customerName = $customer.firstname + " " + $customer.lastname
+#$createdTickets = $createdTickets | Sort-Object -Property created_at -Descending
 
-    $addline = [PScustomObject][Ordered]@{
-        number = $response.number
-        title = $response.title
-        customer = $customerName
-        state = ($ticketState | Where-Object {$_.id -like $response.state_id}).name
-        priority = ($ticketPriorities | Where-Object {$_.id -like $response.priority_id}).name
-        created_at = $response.created_at
-        closed_at = $reponse.close_at
-    }
-    $createdTickets.Add($addline)
-}
-# dump the tickets to the console for testing
-$createdTickets = $createdTickets | Sort-Object -Property closed_at -Descending
-
-$createdTicketsHTML = $createdTickets | ConvertTo-Html -Fragment
+#$createdTicketsHTML = $createdTickets | ConvertTo-Html -Fragment
 
 ##### Grabbing all tickets that were closed in the last 7 days #####
 
-$uri = $baseURL + "tickets/search?query=close_at:>now-7d&limit=100"
+$uri = $baseURL + "tickets/search?query=close_at%3A(%3Enow-7d)%20AND%20tags%3A(!automatic)&limit=100"
 
 # this will return all the ticket numbers based on the above uri
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
@@ -134,6 +144,8 @@ foreach ($ticket in $ticketIDs) {
 
     $customer = $customers | Where-Object {$_.id -like $response.customer_id}
     $customerName = $customer.firstname + " " + $customer.lastname
+
+    $custOrg = $organizations | Where-Object {$_.id -like $response.organization_id}
 
     $owner = $customers | Where-Object {$_.id -like $response.owner_id}
     $ownerName = $owner.firstname + " " + $owner.lastName
@@ -142,6 +154,7 @@ foreach ($ticket in $ticketIDs) {
         number = $response.number
         title = $response.title
         customer = $customerName
+        company = $custOrg.name
         state = ($ticketState | Where-Object {$_.id -like $response.state_id}).name
         owner = $ownerName
         priority = ($ticketPriorities | Where-Object {$_.id -like $response.priority_id}).name
