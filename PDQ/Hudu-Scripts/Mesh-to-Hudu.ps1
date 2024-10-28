@@ -15,9 +15,9 @@
 
 $meshAgent = "C:\Program Files\Mesh Agent\MeshAgent.exe"
 $meshParms = "-nodeid"
-$meshURL = "meshcentralURL"
-$n8nURL = "N8nURL"
-$n8nToken = "N8NToken"
+$meshURL = (bws.exe secret get 87a6bf1c-3259-4b1a-844e-b21700e79c9e | convertfrom-Json).value
+$n8nURL = (bws.exe secret get 2f62489a-31a3-4e31-a088-b21700e75610 | convertfrom-Json).value
+$n8nToken = (bws.exe secret get d8facf10-af46-40bc-a12c-b21700e78148 | convertfrom-Json).value
 $headers = @{'authorization' = "Bearer $n8nToken" }
 
 # Asset Name
