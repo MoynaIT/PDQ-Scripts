@@ -11,6 +11,7 @@ $HuduAssetLayoutName = "Computer Assets"
 # company name as it stand in Hudu
 # for me, this will be overridden below with our values
 $companyName = ""
+$magicDashTitle = "AD Sync"
 
 ###########################################################
 
@@ -63,3 +64,6 @@ foreach ($computer in $ADComputers) {
     }
     sleep(.2)
 }
+[string]$currentDate = Get-Date
+
+Set-HuduMagicDash -Title $magicDashTitle -CompanyName $companyName -icon "fas fa-address-book" -Message $currentDate
