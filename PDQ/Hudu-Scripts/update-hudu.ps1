@@ -43,10 +43,11 @@ $Company = Get-HuduCompanies -name $CompanyName
 $Layout = Get-HuduAssetLayouts -name $HuduAssetLayoutName
 $companyid = $company.id
 
-$ADComputers = Get-ADComputer -Filter {Enabled -eq $True}
+$ADActiveComputers = Get-ADComputer -Filter {Enabled -eq $True}
+$ADInactiveComputers = Get-ADComputer -Filter {Enabled -eq $False}
 $Assets = Get-HuduAssets -companyid $companyid -assetlayoutid $Layout.id
 
-foreach ($computer in $ADComputers) {
+foreach ($computer in $ADActiveComputers) {
     # Check if there is already an asset	
     # Asset Name
     $assetName = $computer.Name
@@ -59,3 +60,26 @@ foreach ($computer in $ADComputers) {
     }
     sleep(.2)
 }
+
+foreach ($computer in $ADInactiveComputers) {
+    # Check if there is already an asset	
+    # Asset Name
+    $assetName = $computer.Name
+    
+    $HuduAsset = ($Assets | Where-Object {$_.name -like $assetName})
+
+    if (!($HuduAsset)) {
+        Continue
+    }else {
+        if ($HuduAsset.archived -eq $false) {
+            write-host $assetName
+            Set-HuduAssetArchive -id $HuduAsset.id -CompanyId $companyid -archive $true -confirm:$false
+        }
+    }
+    sleep(.2)
+}
+
+$date = Get-Date -Format "yyyy-MM-dd"
+$time = Get-Date -Format "HH:mm:ss"
+
+Set-HuduMagicDash -Title $magicDashTitle -CompanyName $companyName -icon "fas fa-address-book" -Message "Last Sync <br> $($date) <br> $($time)"
