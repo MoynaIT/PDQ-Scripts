@@ -4,15 +4,27 @@
 
 ####################---- Settings ---- ####################
 # Get a Hudu API Key from https://yourhududomain.com/admin/api_keys
-$HuduAPIKey = "$env:hudu_api_key"
+$HuduAPIKey = (bws.exe secret get 878de665-5841-4a37-a307-b21900f0b9ef | convertfrom-Json).value
 # Set the base domain of your Hudu instance without a trailing /
-$hududomain = "$env:hudu_domain"
-#Company Name as it appears in Hudu
-$CompanyName = "Mobile Track Solutions"
+$hududomain = (bws.exe secret get c9067ca6-0fa9-4922-ac57-b21900f234da | convertfrom-Json).value
+# Asset Name as it stands in Hudu
 $HuduAssetLayoutName = "Computer Assets"
+# company name as it stand in Hudu
+# for me, this will be overridden below with our values
+$companyName = ""
 
 ###########################################################
 
+if ([string]::IsNullOrEmpty($companyName)) {
+    $domain = (get-computerinfo).CsDomain
+
+    if ($domain -eq ((bws.exe secret get 460505ce-1cf4-4e93-a334-b21900f58b5e | convertfrom-Json).value)) {
+        $companyName = (bws.exe secret get e42d2974-cde7-4bc5-bf13-b21900f27bf1 | convertfrom-Json).value
+    }
+    if ($domain -eq ((bws.exe secret get c49e8401-5d07-4f28-ba1b-b21900f59834 | convertfrom-Json).value)) {
+        $companyName = (bws.exe secret get 3dcaccdb-437e-4aa4-aee0-b21900f26721 | convertfrom-Json).value
+    }
+}
 # Get the Hudu API Module if not installed
 if (Get-Module -ListAvailable -Name HuduAPI) {
     Import-Module HuduAPI 
@@ -32,22 +44,18 @@ $Layout = Get-HuduAssetLayouts -name $HuduAssetLayoutName
 $companyid = $company.id
 
 $ADComputers = Get-ADComputer -Filter {Enabled -eq $True}
+$Assets = Get-HuduAssets -companyid $companyid -assetlayoutid $Layout.id
 
 foreach ($computer in $ADComputers) {
     # Check if there is already an asset	
     # Asset Name
     $assetName = $computer.Name
-    write-host $assetName
     # See if there is already an asset by this name
-    $Asset = Get-HuduAssets -name $assetName -companyid $companyid -assetlayoutid $Layout.id
+    $HuduAsset = ($Assets | Where-Object {$_.name -like $assetName})
 
-    if (!($asset)) {
+    if (!($HuduAsset)) {
         $UpdatedAsset = New-HuduAsset -Name $assetName -CompanyId $companyid -AssetLayoutId $Layout.id
         Write-host "Created $($UpdatedAsset.asset.name)"
-    }else {
-        $UpdatedAsset = Set-HuduAsset -Id $Asset.id -name $assetName -CompanyId $companyid -AssetLayoutId $Layout.id
-        Write-host "Updated $($UpdatedAsset.asset.name)"
     }
-    write-host "sleeping"
     sleep(.2)
 }
