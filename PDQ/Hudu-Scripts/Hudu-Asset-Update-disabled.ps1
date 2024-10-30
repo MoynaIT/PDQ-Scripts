@@ -64,6 +64,8 @@ foreach ($computer in $ADComputers) {
     }
     sleep(.2)
 }
-[string]$currentDate = Get-Date
 
-Set-HuduMagicDash -Title $magicDashTitle -CompanyName $companyName -icon "fas fa-address-book" -Message $currentDate
+$date = Get-Date -Format "yyyy-MM-dd"
+$time = Get-Date -Format "HH:mm:ss"
+
+Set-HuduMagicDash -Title $magicDashTitle -CompanyName $companyName -icon "fas fa-address-book" -Message "Last Sync <br> $($date) <br> $($time)"
