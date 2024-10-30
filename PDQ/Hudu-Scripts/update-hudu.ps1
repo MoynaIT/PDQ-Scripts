@@ -12,6 +12,7 @@ $HuduAssetLayoutName = "Computer Assets"
 # company name as it stand in Hudu
 # for me, this will be overridden below with our values
 $companyName = ""
+$magicDashTitle = "AD Sync"
 
 ###########################################################
 
