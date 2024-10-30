@@ -1,14 +1,13 @@
-# this script will pull all active computers from AD and put them into Hudu
-# it checks to see if the asset is already there and if not, makes a new asset.
-# it only matches off the name of the asset, so make sure they match the host name if you already have assets in there
+# This script will grab all of the disabled computers from AD 
+# and compare them to assets in Hudu and archive them if they are found
 
 ####################---- Settings ---- ####################
 # Get a Hudu API Key from https://yourhududomain.com/admin/api_keys
-$HuduAPIKey = "$env:hudu_api_key"
+$HuduAPIKey = (bws.exe secret get 878de665-5841-4a37-a307-b21900f0b9ef | convertfrom-Json).value
 # Set the base domain of your Hudu instance without a trailing /
-$hududomain = "$env:hudu_domain"
+$hududomain = (bws.exe secret get c9067ca6-0fa9-4922-ac57-b21900f234da | convertfrom-Json).value
 #Company Name as it appears in Hudu
-$CompanyName = "Mobile Track Solutions"
+$CompanyName = (bws.exe secret get e42d2974-cde7-4bc5-bf13-b21900f27bf1 | convertfrom-Json).value
 $HuduAssetLayoutName = "Computer Assets"
 
 ###########################################################
@@ -31,23 +30,21 @@ $Company = Get-HuduCompanies -name $CompanyName
 $Layout = Get-HuduAssetLayouts -name $HuduAssetLayoutName
 $companyid = $company.id
 
-$ADComputers = Get-ADComputer -Filter {Enabled -eq $True}
+$ADComputers = Get-ADComputer -Filter {Enabled -eq $False}
+$Assets = Get-HuduAssets -companyid $companyid -assetlayoutid $Layout.id
 
 foreach ($computer in $ADComputers) {
     # Check if there is already an asset	
     # Asset Name
     $assetName = $computer.Name
     write-host $assetName
-    # See if there is already an asset by this name
-    $Asset = Get-HuduAssets -name $assetName -companyid $companyid -assetlayoutid $Layout.id
+    
+    $HuduAsset = ($Assets | Where-Object {$_.name -like $assetName})
 
-    if (!($asset)) {
-        $UpdatedAsset = New-HuduAsset -Name $assetName -CompanyId $companyid -AssetLayoutId $Layout.id
-        Write-host "Created $($UpdatedAsset.asset.name)"
+    if (!($HuduAsset)) {
+        Continue
     }else {
-        $UpdatedAsset = Set-HuduAsset -Id $Asset.id -name $assetName -CompanyId $companyid -AssetLayoutId $Layout.id
-        Write-host "Updated $($UpdatedAsset.asset.name)"
+        Set-HuduAssetArchive -id $HuduAsset.id -CompanyId $companyid -archive $true -confirm:$false
     }
-    write-host "sleeping"
     sleep(.2)
 }
