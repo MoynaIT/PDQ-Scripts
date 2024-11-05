@@ -1,0 +1,1 @@
+msiexec /i "C:\temp\AcroPro.msi" PATCH="C:\temp\AcroRdrDCx64Upd2400420220.msp" /QN
