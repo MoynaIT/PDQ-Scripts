@@ -7,8 +7,12 @@
 
 import-module HuduAPI
 # setup Hudu
-New-HuduAPIKey "$env:hudu_api_key"
-New-HuduBaseURL "$env:hudu_domain"
+# Get a Hudu API Key from https://yourhududomain.com/admin/api_keys
+$HuduAPIKey = (bws.exe secret get 878de665-5841-4a37-a307-b21900f0b9ef | convertfrom-Json).value
+# Set the base domain of your Hudu instance without a trailing /
+$hududomain = (bws.exe secret get c9067ca6-0fa9-4922-ac57-b21900f234da | convertfrom-Json).value
+New-HuduAPIKey $HuduAPIKey
+New-HuduBaseURL $hududomain
 
 $ZammadCreds = Get-HuduPasswords -Name "IT Helpdesk - Report API Key"
 $emailTo = $(Get-HuduPasswords -Name "IT HelpDesk - Report To Address").password
@@ -202,7 +206,7 @@ $emailParams = @{
     UseSsl       = $true
     Priority     = "High"
     From         = $emailFrom
-    To           = $emailTo
+    To           = "ppalmersheim@cjmoyna.com"
     Subject      = "IT Department Weekly Update"
     Body         = $fullHTMLReport
     BodyAsHtml   = $true
@@ -216,3 +220,5 @@ try {
 catch {
     Write-Host "Error occured" $_
 }
+
+#To           = $emailTo
