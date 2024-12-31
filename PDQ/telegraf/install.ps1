@@ -1,3 +1,9 @@
+$path = "C:\temp"
+If(!(test-path $path))
+{
+      New-Item -ItemType Directory -Force -Path $path
+}
+
 set-location "C:\temp"
 
 wget "https://dl.influxdata.com/telegraf/releases/telegraf-1.33.0_windows_amd64.zip" -UseBasicParsing -OutFile telegraf-1.33.0_windows_amd64.zip
