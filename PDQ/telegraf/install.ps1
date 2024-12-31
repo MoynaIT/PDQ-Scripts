@@ -14,7 +14,7 @@ New-Item -ItemType Directory -Path "C:\Program Files\telegraf"
 
 Move-Item -Path ".\telegraf\telegraf-1.33.0\telegraf.exe" -Destination "C:\Program Files\telegraf\telegraf.exe" 
 
-$path = "C:\Program Files\telegraf\conf\"
+$path = "C:\Program Files\telegraf\telegraf.d\"
 If(!(test-path $path))
 {
       New-Item -ItemType Directory -Force -Path $path
