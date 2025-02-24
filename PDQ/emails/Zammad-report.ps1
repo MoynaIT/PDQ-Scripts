@@ -56,7 +56,7 @@ $ticketPriorities = Invoke-RestMethod -Uri $uri -Headers $headers -method Get
 
 ##### Grabbing all tickets that are currently open #####
 
-$uri = $baseURL + "tickets/search?query=state.name%3A(!closed%20AND%20!merged)%20AND%20tags%3A(!automatic)&limit=100"
+$uri = $baseURL + "tickets/search?query=state.name%3A(!closed%20AND%20!merged)%20AND%20tags%3A(!automatic)%20AND%20organization.id%3A2&limit=100"
 
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
@@ -133,7 +133,7 @@ $openTicketsHTML = $openTickets | ConvertTo-Html -Fragment
 
 ##### Grabbing all tickets that were closed in the last 7 days #####
 
-$uri = $baseURL + "tickets/search?query=close_at%3A(%3Enow-7d)%20AND%20tags%3A(!automatic)&limit=100"
+$uri = $baseURL + "tickets/search?query=close_at%3A(%3Enow-7d)%20AND%20tags%3A(!automatic)%20AND%20organization.id%3A2&limit=100"
 
 # this will return all the ticket numbers based on the above uri
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
@@ -220,5 +220,3 @@ try {
 catch {
     Write-Host "Error occured" $_
 }
-
-#To           = $emailTo
