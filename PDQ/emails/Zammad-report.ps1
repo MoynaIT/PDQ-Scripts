@@ -4,6 +4,7 @@
 # revision Log:
 # 2-jul-2024 - Updated script to encompass using the Hudu Powershell module to eliminate storing credentials in the script and Github
 # 24-oct-2024 - updated script to include company name and to exclude specific tags
+# 17-apr-2025 - update to address changes in zammad 6.5 api
 
 import-module HuduAPI
 # setup Hudu
@@ -11,8 +12,11 @@ New-HuduAPIKey "$env:hudu_api_key"
 New-HuduBaseURL "$env:hudu_domain"
 
 $ZammadCreds = Get-HuduPasswords -Name "IT Helpdesk - Report API Key"
-$emailTo = $(Get-HuduPasswords -Name "IT HelpDesk - Report To Address").password
+#$emailTo = $(Get-HuduPasswords -Name "IT HelpDesk - Report To Address").password
+$emailTo = "ppalmersheim@cjmoyna.com"
 $emailFrom = $(Get-HuduPasswords -Name "IT Helpdesk - Report From Address").password
+
+$htmlSave = $true
 
 $baseURL = $ZammadCreds.username
 $headers = @{}
@@ -25,6 +29,7 @@ $headers.Add("Authorization", "Token $($ZammadCreds.password)")
 #$createdTickets = [System.Collections.Generic.List[Object]]::new()
 $closedTickets = [System.Collections.Generic.List[Object]]::new()
 $openTickets = [System.Collections.Generic.List[Object]]::new()
+$htmlSaveLocation = "C:\temp\$(Get-Date -Format o | ForEach-Object { $_ -replace ":", "-" }).html"
 
 # grab the current customer list instead of doing a look up each time against the API
 
@@ -56,12 +61,12 @@ $uri = $baseURL + "tickets/search?query=state.name%3A(!closed%20AND%20!merged)%2
 
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
-$ticketIDs = $response.tickets
+$ticketIDs = $response
 
 # we need to grab each of those tickets now to get the information about each one
 
 foreach ($ticket in $ticketIDs) {
-    $uri = $baseURL + "tickets/$ticket"
+    $uri = $baseURL + "tickets/$($ticket.id)"
     $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
     $customer = $customers | Where-Object {$_.id -like $response.customer_id}
@@ -134,12 +139,12 @@ $uri = $baseURL + "tickets/search?query=close_at%3A(%3Enow-7d)%20AND%20tags%3A(!
 # this will return all the ticket numbers based on the above uri
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
-$ticketIDs = $response.tickets
+$ticketIDs = $response
 
 # we need to grab each of those tickets now to get the information about each one
 
 foreach ($ticket in $ticketIDs) {
-    $uri = $baseURL + "tickets/$ticket"
+    $uri = $baseURL + "tickets/$($ticket.id)"
     $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
     $customer = $customers | Where-Object {$_.id -like $response.customer_id}
@@ -192,7 +197,7 @@ $htmlhead = "<html>
            <p><h2><b></b></h2></p>
            <p><h3>Generated: " + (Get-Date -format g) + "</h3></p></div>"
 
-$fullHTMLReport = $htmlhead + "<p><h3><b> Open Tickets, sorted by date created. </b></h3></p>" + $openTicketsHTML + "<p><h3><b> Closed Tickets in the last week, sorted by date closed. </b></h3></p>" + $closedTicketsHTML
+$fullHTMLReport = $htmlhead + "<p><h3><b> Open Tickets, sorted by date created. </b></h3></p>" + $openTicketsHTML + "<p><h3><b> Closed Tickets in the last week, sorted by date closed. </b></h3></p>" + $closedTicketsHTML + "</body></html>"
 
 #######      Create the email        #######
 
@@ -215,4 +220,8 @@ try {
 }
 catch {
     Write-Host "Error occured" $_
+}
+
+if ($htmlSave) {
+    $fullHTMLReport | Out-File -FilePath $htmlSaveLocation -Encoding utf8
 }
