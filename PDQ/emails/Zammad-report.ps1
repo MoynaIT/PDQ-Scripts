@@ -32,7 +32,8 @@ $headers.Add("Authorization", "Token $($ZammadCreds.password)")
 #$createdTickets = [System.Collections.Generic.List[Object]]::new()
 $closedTickets = [System.Collections.Generic.List[Object]]::new()
 $openTickets = [System.Collections.Generic.List[Object]]::new()
-$htmlSaveLocation = "C:\temp\$(Get-Date -Format o | ForEach-Object { $_ -replace ":", "-" }).html"
+$timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "-" }
+$htmlSaveLocation = "C:\temp\zammadReports\$timestamp.html"
 
 # grab the current customer list instead of doing a look up each time against the API
 
