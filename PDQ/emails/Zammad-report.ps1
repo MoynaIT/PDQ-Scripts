@@ -8,12 +8,15 @@
 
 import-module HuduAPI
 # setup Hudu
-New-HuduAPIKey "$env:hudu_api_key"
-New-HuduBaseURL "$env:hudu_domain"
+# Get a Hudu API Key from https://yourhududomain.com/admin/api_keys
+$HuduAPIKey = (bws.exe secret get 878de665-5841-4a37-a307-b21900f0b9ef | convertfrom-Json).value
+# Set the base domain of your Hudu instance without a trailing /
+$hududomain = (bws.exe secret get c9067ca6-0fa9-4922-ac57-b21900f234da | convertfrom-Json).value
+New-HuduAPIKey $HuduAPIKey
+New-HuduBaseURL $hududomain
 
 $ZammadCreds = Get-HuduPasswords -Name "IT Helpdesk - Report API Key"
-#$emailTo = $(Get-HuduPasswords -Name "IT HelpDesk - Report To Address").password
-$emailTo = "ppalmersheim@cjmoyna.com"
+$emailTo = $(Get-HuduPasswords -Name "IT HelpDesk - Report To Address").password
 $emailFrom = $(Get-HuduPasswords -Name "IT Helpdesk - Report From Address").password
 
 $htmlSave = $true
@@ -57,7 +60,7 @@ $ticketPriorities = Invoke-RestMethod -Uri $uri -Headers $headers -method Get
 
 ##### Grabbing all tickets that are currently open #####
 
-$uri = $baseURL + "tickets/search?query=state.name%3A(!closed%20AND%20!merged)%20AND%20tags%3A(!automatic)&limit=100"
+$uri = $baseURL + "tickets/search?query=state.name%3A(!closed%20AND%20!merged)%20AND%20tags%3A(!automatic)%20AND%20organization.id%3A2&limit=100"
 
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
@@ -134,7 +137,7 @@ $openTicketsHTML = $openTickets | ConvertTo-Html -Fragment
 
 ##### Grabbing all tickets that were closed in the last 7 days #####
 
-$uri = $baseURL + "tickets/search?query=close_at%3A(%3Enow-7d)%20AND%20tags%3A(!automatic)&limit=100"
+$uri = $baseURL + "tickets/search?query=close_at%3A(%3Enow-7d)%20AND%20tags%3A(!automatic)%20AND%20organization.id%3A2&limit=100"
 
 # this will return all the ticket numbers based on the above uri
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
